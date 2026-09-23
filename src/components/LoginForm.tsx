@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { Eye, EyeOff, Mail } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import BrandLogo from './BrandLogo'
 
 interface LoginFormState {
@@ -229,6 +229,16 @@ function LoginForm() {
           Apple
         </button>
       </div>
+
+      <p className="mt-6 text-center text-sm text-slate-500">
+  Don&apos;t have an account?{' '}
+  <Link
+    to="/signup"
+    className="font-semibold text-[#168b83] hover:text-[#0f706a]"
+  >
+    Create account
+  </Link>
+</p>
     </div>
   )
 }
