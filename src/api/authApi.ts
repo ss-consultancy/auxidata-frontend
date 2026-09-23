@@ -1,36 +1,37 @@
 import type {
-  ApiErrorResponse,
+  AuthResponse,
   LoginRequest,
-  LoginResponse,
+  RefreshRequest,
+  RegisterRequest,
 } from '../features/auth/auth.types'
+import { apiRequest } from './httpClient'
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080/api'
-
-export async function loginUser(
-  request: LoginRequest,
-): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+export function registerUser(
+  request: RegisterRequest,
+): Promise<AuthResponse> {
+  return apiRequest<AuthResponse>('/auth/register', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    credentials: 'include',
-    body: JSON.stringify(request),
+    body: request,
+    requiresAuth: false,
   })
+}
 
-  const payload: LoginResponse | ApiErrorResponse | null = await response
-    .json()
-    .catch(() => null)
+export function loginUser(
+  request: LoginRequest,
+): Promise<AuthResponse> {
+  return apiRequest<AuthResponse>('/auth/login', {
+    method: 'POST',
+    body: request,
+    requiresAuth: false,
+  })
+}
 
-  if (!response.ok) {
-    const message =
-      payload && 'message' in payload
-        ? payload.message
-        : 'Unable to authenticate. Please try again.'
-
-    throw new Error(message)
-  }
-
-  return payload as LoginResponse
+export function logoutUser(
+  request: RefreshRequest,
+): Promise<void> {
+  return apiRequest<void>('/auth/logout', {
+    method: 'POST',
+    body: request,
+    requiresAuth: false,
+  })
 }

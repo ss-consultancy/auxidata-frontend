@@ -1,15 +1,18 @@
 import { BarChart3, Database, LogOut, Users } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../features/auth/AuthContext'
 
 function DashboardPage() {
   const navigate = useNavigate()
+  const { logout } = useAuth()
 
   const userEmail = sessionStorage.getItem('auxi_email') ?? 'user@auxidata.com'
 
-  function handleLogout() {
+  async function handleLogout() {
     sessionStorage.removeItem('auxi_authenticated')
     sessionStorage.removeItem('auxi_email')
-    navigate('/login')
+     await logout()
+    navigate('/login', { replace: true })
   }
 
   return (

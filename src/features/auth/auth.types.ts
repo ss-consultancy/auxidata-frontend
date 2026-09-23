@@ -18,8 +18,28 @@ export interface LoginResponse {
   expiresIn?: number
 }
 
+export interface RegisterRequest {
+  email: string
+  password: string
+  firstName: string
+  lastName: string
+}
+
+export interface RefreshRequest {
+  refreshToken: string
+}
+
+export interface AuthResponse {
+  accessToken: string
+  refreshToken: string
+  tokenType: 'Bearer'
+  expiresIn: number
+}
+
 export interface ApiErrorResponse {
-  message: string
-  errorCode?: string
   timestamp?: string
+  status?: number
+  error?: string
+  message?: string
+  fieldErrors?: Record<string, string>
 }

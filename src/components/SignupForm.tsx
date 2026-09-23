@@ -10,8 +10,11 @@ import {
   useState,
   type ChangeEvent,
   type FormEvent,
+  type ReactNode,
 } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { ApiError } from '../api/httpClient'
+import { useAuth } from '../features/auth/AuthContext'
 import BrandLogo from './BrandLogo'
 
 interface SignupFormState {
@@ -34,6 +37,7 @@ const initialSignupForm: SignupFormState = {
 
 function SignupForm() {
   const navigate = useNavigate()
+  const { register } = useAuth()
 
   const [form, setForm] = useState<SignupFormState>(initialSignupForm)
   const [showPassword, setShowPassword] = useState<boolean>(false)
@@ -71,20 +75,29 @@ function SignupForm() {
       return
     }
 
+    const { firstName, lastName } = splitFullName(form.fullName)
+
     try {
       setIsSubmitting(true)
 
-      // Demo-only delay.
-      // Replace this with your Spring Boot /api/auth/register call.
-      await new Promise<void>((resolve) => {
-        window.setTimeout(resolve, 700)
+      await register({
+        email: form.email.trim().toLowerCase(),
+        password: form.password,
+        firstName,
+        lastName,
       })
 
-      sessionStorage.setItem('signup_email', form.email)
+      navigate('/dashboard', { replace: true })
+    } catch (caughtError: unknown) {
+      if (caughtError instanceof ApiError) {
+        const firstFieldError = caughtError.fieldErrors
+          ? Object.values(caughtError.fieldErrors)[0]
+          : undefined
 
-      navigate('/login')
-    } catch {
-      setError('Unable to create your account. Please try again.')
+        setError(firstFieldError ?? caughtError.message)
+      } else {
+        setError('Unable to create your account. Please try again.')
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -277,13 +290,13 @@ function SignupForm() {
 }
 
 interface FormFieldProps {
-  id: keyof SignupFormState
-  name: keyof SignupFormState
+  id: 'fullName' | 'email' | 'companyName'
+  name: 'fullName' | 'email' | 'companyName'
   label: string
   placeholder: string
   value: string
   onChange: (event: ChangeEvent<HTMLInputElement>) => void
-  icon: React.ReactNode
+  icon: ReactNode
   type?: 'text' | 'email'
   autoComplete?: string
 }
@@ -335,8 +348,8 @@ function FormField({
 }
 
 interface PasswordFieldProps {
-  id: keyof SignupFormState
-  name: keyof SignupFormState
+  id: 'password' | 'confirmPassword'
+  name: 'password' | 'confirmPassword'
   label: string
   placeholder: string
   value: string
@@ -372,9 +385,7 @@ function PasswordField({
           placeholder={placeholder}
           value={value}
           onChange={onChange}
-          autoComplete={
-            id === 'password' ? 'new-password' : 'new-password'
-          }
+          autoComplete="new-password"
           className="
             h-12 w-full rounded-lg border border-slate-300
             bg-[#f8fafc] px-11 pr-12 text-sm text-slate-900 outline-none
@@ -501,6 +512,24 @@ function validateForm(form: SignupFormState): string | null {
   return null
 }
 
+function splitFullName(fullName: string): {
+  firstName: string
+  lastName: string
+} {
+  const nameParts = fullName
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+
+  const firstName = nameParts[0] ?? ''
+  const lastName = nameParts.slice(1).join(' ')
+
+  return {
+    firstName,
+    lastName,
+  }
+}
+
 function Divider() {
   return (
     <div className="my-5 flex items-center gap-3 text-sm text-slate-400">
@@ -521,10 +550,7 @@ function GoogleIcon() {
 
 function MicrosoftIcon() {
   return (
-    <span
-      className="grid grid-cols-2 gap-0.5"
-      aria-hidden="true"
-    >
+    <span className="grid grid-cols-2 gap-0.5" aria-hidden="true">
       <span className="h-2.5 w-2.5 bg-[#f25022]" />
       <span className="h-2.5 w-2.5 bg-[#7fba00]" />
       <span className="h-2.5 w-2.5 bg-[#00a4ef]" />

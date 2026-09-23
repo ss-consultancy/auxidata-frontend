@@ -1,6 +1,12 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react'
+import {
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from 'react'
 import { Eye, EyeOff, Mail } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
+import { ApiError } from '../api/httpClient'
+import { useAuth } from '../features/auth/AuthContext'
 import BrandLogo from './BrandLogo'
 
 interface LoginFormState {
@@ -17,6 +23,7 @@ const initialFormState: LoginFormState = {
 
 function LoginForm() {
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   const [form, setForm] = useState<LoginFormState>(initialFormState)
   const [showPassword, setShowPassword] = useState<boolean>(false)
@@ -48,12 +55,14 @@ function LoginForm() {
     event.preventDefault()
     setError('')
 
-    if (!form.email.trim() || !form.password) {
+    const email = form.email.trim().toLowerCase()
+
+    if (!email || !form.password) {
       setError('Please enter your email and password.')
       return
     }
 
-    if (!/\S+@\S+\.\S+/.test(form.email)) {
+    if (!/\S+@\S+\.\S+/.test(email)) {
       setError('Please enter a valid email address.')
       return
     }
@@ -61,18 +70,18 @@ function LoginForm() {
     try {
       setIsSubmitting(true)
 
-      // Demo-only behavior.
-      // Replace this with your Spring Boot /auth/login API call later.
-      await new Promise<void>((resolve) => {
-        window.setTimeout(resolve, 600)
+      await login({
+        email,
+        password: form.password,
       })
 
-      sessionStorage.setItem('auxi_authenticated', 'true')
-      sessionStorage.setItem('auxi_email', form.email)
-
-      navigate('/dashboard')
-    } catch {
-      setError('Unable to sign in. Please try again.')
+      navigate('/dashboard', { replace: true })
+    } catch (caughtError: unknown) {
+      if (caughtError instanceof ApiError) {
+        setError(caughtError.message)
+      } else {
+        setError('Unable to sign in. Please try again.')
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -231,14 +240,14 @@ function LoginForm() {
       </div>
 
       <p className="mt-6 text-center text-sm text-slate-500">
-  Don&apos;t have an account?{' '}
-  <Link
-    to="/signup"
-    className="font-semibold text-[#168b83] hover:text-[#0f706a]"
-  >
-    Create account
-  </Link>
-</p>
+        Don&apos;t have an account?{' '}
+        <Link
+          to="/signup"
+          className="font-semibold text-[#168b83] hover:text-[#0f706a]"
+        >
+          Create account
+        </Link>
+      </p>
     </div>
   )
 }
