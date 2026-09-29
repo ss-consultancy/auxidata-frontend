@@ -1,6 +1,5 @@
 import {
   Bell,
-  CalendarDays,
   ChevronDown,
   CircleHelp,
   Menu,
